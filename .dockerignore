@@ -1,0 +1,10 @@
+node_modules
+.env*
+data
+.git
+tests
+*.zip
+
+artifacts
+work
+.github

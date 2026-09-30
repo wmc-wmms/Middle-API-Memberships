@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: audax
+      POSTGRES_DB: audax
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Definí POSTGRES_PASSWORD}
+    volumes:
+      - database:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U audax -d audax"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [backend]
+
+  api:
+    build: .
+    restart: unless-stopped
+    init: true
+    env_file: ["${APP_ENV_FILE:-.env.test}"]
+    environment:
+      DATABASE_URL: postgresql://audax:${POSTGRES_PASSWORD}@db:5432/audax
+      HOST: 0.0.0.0
+      PORT: 3000
+      WORKER_ENABLED: "false"
+    ports:
+      - "127.0.0.1:${HOST_PORT:-3000}:3000"
+    depends_on:
+      db: { condition: service_healthy }
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    networks: [backend]
+    security_opt: ["no-new-privileges:true"]
+
+  worker:
+    build: .
+    restart: unless-stopped
+    init: true
+    command: ["node", "src/worker-main.mjs"]
+    env_file: ["${APP_ENV_FILE:-.env.test}"]
+    environment:
+      DATABASE_URL: postgresql://audax:${POSTGRES_PASSWORD}@db:5432/audax
+    depends_on:
+      db: { condition: service_healthy }
+    networks: [backend]
+    security_opt: ["no-new-privileges:true"]
+
+volumes:
+  database:
+networks:
+  backend:

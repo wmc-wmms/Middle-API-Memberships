@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>WMC + WMMS · Membership Gateway</title><meta name="description" content="Portal corporativo de recepción, validación y seguimiento de memberships de WMC y WMMS."><link rel="stylesheet" href="/styles.css"><link rel="stylesheet" href="/audax-modules.css"><link rel="stylesheet" href="/brand.css">
+</head>
+<body>
+  <div id="login-screen" class="login-layout">
+    <section class="login-story"><div class="login-brand"><div class="brand-pair" aria-label="WMC y WMMS"><span class="logo-window logo-wmc"><img src="/assets/wmc-logo.png" alt="WMC · World Medical Care" width="487" height="230"></span><span class="brand-divider" aria-hidden="true"></span><span class="logo-window logo-wmms"><img src="/assets/wmms-logo.png" alt="WMMS" width="626" height="209"></span></div><span class="product-label">MEMBERSHIP GATEWAY</span></div>
+      <div><span class="eyebrow">INTEGRACIONES CORPORATIVAS</span><h1>Recepción simple.<br>Control de principio a fin.</h1><p>Un punto de acceso para tus clientes. Recibimos sus memberships, validamos los datos y las enviamos a Audax desde nuestra cuenta corporativa.</p>
+      <div class="pipeline"><span><b>01</b> Clientes<small>Envío por API</small></span><i>→</i><span class="selected"><b>02</b> WMC + WMMS<small>Validación y resguardo</small></span><i>→</i><span><b>03</b> Audax<small>Resultado confirmado</small></span></div></div>
+      <small>CREDENCIALES POR CLIENTE · TRAZABILIDAD DE CADA ENVÍO</small>
+    </section>
+    <section class="login-form-wrap"><div class="mobile-brand"><div class="brand-pair" aria-label="WMC y WMMS"><span class="logo-window logo-wmc"><img src="/assets/wmc-logo.png" alt="WMC · World Medical Care" width="487" height="230"></span><span class="brand-divider" aria-hidden="true"></span><span class="logo-window logo-wmms"><img src="/assets/wmms-logo.png" alt="WMMS" width="626" height="209"></span></div></div><form id="login-form"><span id="login-environment" class="badge">Cargando ambiente</span><span class="eyebrow login-eyebrow">ACCESO DEL EQUIPO</span><h2>Centro de operaciones</h2><p>Administrá clientes, supervisá memberships y consultá el resultado de cada envío.</p>
+      <label>Usuario administrador<input name="username" autocomplete="username" required maxlength="120"></label>
+      <label>Contraseña<input name="password" type="password" autocomplete="current-password" required maxlength="1024"></label>
+      <p id="login-error" class="form-error" role="alert"></p><button class="primary wide" type="submit">Ingresar al panel <span>→</span></button>
+      <small>El acceso administrativo es independiente de las credenciales de tus clientes.</small></form></section>
+  </div>
+  <div id="application" class="app-layout" hidden>
+    <aside class="sidebar"><a class="corporate-brand" href="#overview" aria-label="WMC y WMMS · Inicio"><div class="brand-pair" aria-label="WMC y WMMS"><span class="logo-window logo-wmc"><img src="/assets/wmc-logo.png" alt="WMC · World Medical Care" width="487" height="230"></span><span class="brand-divider" aria-hidden="true"></span><span class="logo-window logo-wmms"><img src="/assets/wmms-logo.png" alt="WMMS" width="626" height="209"></span></div><span class="product-label">MEMBERSHIP GATEWAY</span></a><span class="sidebar-caption">CENTRO DE OPERACIONES</span>
+      <nav aria-label="Navegación principal">
+        <a href="#overview" data-page="overview"><span>◫</span> Resumen</a>
+        <a href="#connection" data-page="connection"><span>⌁</span> Conexión Audax</a>
+        <a href="#catalogs" data-page="catalogs"><span>▦</span> Catálogos</a>
+        <a href="#clients" data-page="clients"><span>◎</span> Usuarios API</a>
+        <a href="#memberships" data-page="memberships"><span>▤</span> Memberships</a>
+        <a href="#operations" data-page="operations"><span>⇄</span> Operaciones</a>
+        <a href="#guide" data-page="guide"><span>⌘</span> Guía de integración</a>
+        <a href="#audit" data-page="audit"><span>≡</span> Auditoría</a>
+      </nav>
+      <div class="sidebar-bottom"><div id="sidebar-env" class="badge"></div><p>Credenciales y datos aislados<br>por ambiente.</p><button id="password-button" class="sidebar-action">Cambiar contraseña</button><button id="logout-button" class="sidebar-action">Cerrar sesión ↗</button></div>
+    </aside>
+    <main><header class="topbar"><span id="breadcrumb">Operaciones / Resumen</span><div><span id="connection-state" class="connection">● Servidor activo</span><label class="environment-switch">Entorno<select id="environment-select" aria-label="Cambiar entorno"><option value="test">TEST</option><option value="prod">PROD</option></select></label><span id="admin-name" class="avatar-label"></span></div></header>
+      <div class="content"><div id="mode-banner" class="mode-banner"></div><div id="page-content"></div></div>
+    </main>
+  </div>
+  <dialog id="editor-dialog"><form id="client-form"><div class="dialog-heading"><div><span class="eyebrow">USUARIOS DE INTEGRACIÓN</span><h2 id="editor-title">Nuevo usuario API</h2></div><button type="button" class="icon-button" data-close aria-label="Cerrar">×</button></div>
+    <input name="id" type="hidden"><div class="form-grid"><label>Nombre del usuario<input name="name" required maxlength="120" placeholder="Integración comercial"></label><label>Nombre de empresa<input name="company_name" required maxlength="180" placeholder="Nombre de la empresa"></label>
+    <label class="span-two">Email de contacto<input name="email" type="email" placeholder="integraciones@empresa.com"></label>
+    <div id="legacy-permissions" class="span-two form-grid"><label>Business IDs de Audax<input name="business_ids" required placeholder="111, 222"><small>Separados por coma. No es el nombre de empresa.</small></label><label>Plan IDs habilitados<input name="plan_ids" required placeholder="999, 777"><small>Solo podrá operar con estos planes.</small></label></div></div>
+    <div id="real-permissions" hidden></div>
+    <fieldset><legend>Permisos de la API</legend><div id="scope-options" class="check-grid"></div></fieldset>
+    <small>Override requiere además habilitación en el servidor y autorización de Audax. Permite omitir ciertas reglas de vigencia.</small>
+    <label class="check"><input name="active" type="checkbox" checked> Usuario activo</label>
+    <p id="client-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" data-close>Cancelar</button><button type="submit" class="primary">Guardar usuario</button></div>
+  </form></dialog>
+  <dialog id="secret-dialog"><div class="dialog-heading"><div><span class="eyebrow">ACCESO GENERADO</span><h2>Guardá estas credenciales</h2></div><button class="icon-button" data-close aria-label="Cerrar">×</button></div>
+    <p>El secret se muestra una sola vez. Al cerrar esta ventana, podrás generar uno nuevo, pero no recuperar este.</p>
+    <span id="secret-environment" class="badge"></span><label>Client ID<input id="generated-id" readonly></label><label>Client secret<input id="generated-secret" readonly></label>
+    <div class="dialog-actions"><button id="copy-credentials">Copiar credenciales</button><button class="primary" data-close>Ya las guardé</button></div>
+  </dialog>
+  <dialog id="detail-dialog"><div class="dialog-heading"><div><span class="eyebrow">TRAZABILIDAD</span><h2>Detalle de la operación</h2></div><button class="icon-button" data-close aria-label="Cerrar">×</button></div><div id="operation-detail"></div></dialog>
+  <dialog id="password-dialog"><form id="password-form"><div class="dialog-heading"><h2>Cambiar contraseña</h2><button type="button" class="icon-button" data-close aria-label="Cerrar">×</button></div>
+    <label>Contraseña actual<input name="current_password" type="password" autocomplete="current-password" required></label><label>Nueva contraseña<input name="new_password" type="password" autocomplete="new-password" minlength="16" required></label><p>Al guardar, se cierran todas las sesiones administrativas.</p><p id="password-error" class="form-error"></p><div class="dialog-actions"><button class="primary" type="submit">Guardar contraseña</button></div></form></dialog>
+  <dialog id="manual-dialog"><form id="manual-membership-form"><div class="dialog-heading"><div><span class="eyebrow">ENVÍO A AUDAX TEST</span><h2 id="manual-title">Alta manual de membership</h2></div><button type="button" class="icon-button" data-close aria-label="Cerrar">×</button></div><input type="hidden" name="kind">
+    <div class="form-grid"><label class="span-all">Usuario API responsable<select name="client_id" required></select><small>Se aplican sus permisos de empresa, plan y operación.</small></label><label>Business<select name="business_id" required></select></label><label>Plan<select name="plan_id" required></select></label><label>País de emisión<select name="issued_country" required></select></label></div>
+    <div class="form-section-title">Datos de la membership y del titular</div><div class="form-grid">
+      <label>Número de membership<input name="membership_number" required maxlength="128"></label><label>Documento / pasaporte<input name="national_id" required maxlength="128"></label><label>Fecha de nacimiento<input name="date_of_birth" type="date" required></label>
+      <label>Apellido<input name="last_name" required maxlength="200"></label><label>Nombre<input name="first_name" required maxlength="200"></label><label>Fecha de emisión<input name="issued_date" type="date" required></label>
+      <label>Válida desde<input name="valid_from" type="date" required></label><label>Válida hasta<input name="valid_to" type="date" required></label><label>Máximo de días por viaje<input name="max_consecutive_days_per_trip" type="number" min="1" max="2147483647" step="1" required></label>
+      <label>Precio (opcional)<input name="price" type="number" min="0.000001" step="any"></label><label>Moneda<select name="currency_id"></select></label>
+    </div><div id="manual-price-note" class="note" hidden>Audax no modifica el precio oficial mediante UpdateMembershipBatch. Este formulario actualiza los datos de la membership; la operación de precios es independiente.</div>
+    <details><summary>Upgrades y opciones avanzadas</summary><label>Upgrades (JSON opcional)<textarea name="upgrades" rows="5" placeholder="Dejar vacío si no hay upgrades"></textarea><small id="manual-upgrade-help"></small></label><label class="check"><input type="checkbox" name="override"> Usar override autorizado</label><small>Requiere permiso especial en el usuario, habilitación del servidor y autorización de Audax.</small></details>
+    <p id="manual-error" class="form-error" role="alert"></p><div class="dialog-actions"><button type="button" data-close>Cancelar</button><button class="primary" type="submit">Guardar y enviar a Audax</button></div>
+  </form></dialog>
+  <div id="toast" role="status" hidden></div><script src="/app.js" type="module"></script>
+</body></html>

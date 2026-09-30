@@ -1,0 +1,22 @@
+# Complemento para publicar UNA instancia con HTTPS automático.
+# Ejecutar junto a compose.yaml y un archivo .env específico del ambiente.
+services:
+  proxy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN:?Definí el dominio de esta instancia}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      api: { condition: service_healthy }
+    networks: [backend]
+
+volumes:
+  caddy_data:
+  caddy_config:

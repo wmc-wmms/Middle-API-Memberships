@@ -1,0 +1,31 @@
+{
+  "name": "audax-membership-gateway",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "setup": "node scripts/setup.mjs",
+    "dev": "node --env-file=.env src/main.mjs",
+    "start": "node src/main.mjs",
+    "worker": "node src/worker-main.mjs",
+    "test": "node --test --test-concurrency=1 tests/*.test.mjs",
+    "check": "node scripts/check.mjs",
+    "dev:both": "node scripts/run-local.mjs",
+    "dev:prod": "node --env-file=.env.prod.local src/main.mjs",
+    "check:repository": "node scripts/check-repository.mjs"
+  },
+  "dependencies": {
+    "@fastify/cookie": "^11.0.0",
+    "@fastify/formbody": "^8.0.0",
+    "@fastify/rate-limit": "^10.0.0",
+    "fastify": "^5.0.0",
+    "pg": "^8.0.0",
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "^0.3.0"
+  }
+}

@@ -1,0 +1,7 @@
+# Caddy instalado en el host, con DNS y puertos 80/443 configurados.
+# Reemplazar el dominio y mantener PUBLIC_ORIGIN idéntico.
+api.tu-dominio.com {
+    reverse_proxy 127.0.0.1:3001
+}
+# Para TEST público agregar otro dominio hacia 127.0.0.1:3000 y activar
+# PUBLIC_ORIGIN=https://api-test.tu-dominio.com y COOKIE_SECURE=true en .env.test.

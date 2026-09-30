@@ -1,0 +1,1531 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Audax Membership Gateway",
+    "version": "1.0.0",
+    "description": "API pública del middleware. Recepción persistente y procesamiento asíncrono. ProcessID es local. Cancel devuelve 202; se consulta por GetProcessStatus. Upgrades se remiten a UpdateMembershipBatch de Audax."
+  },
+  "servers": [
+    {
+      "url": "http://127.0.0.1:3000",
+      "description": "TEST local"
+    }
+  ],
+  "paths": {
+    "/oauth/token": {
+      "post": {
+        "summary": "Obtener token de una hora",
+        "security": [
+          {
+            "basic": []
+          },
+          {}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "grant_type"
+                ],
+                "properties": {
+                  "grant_type": {
+                    "const": "client_credentials"
+                  },
+                  "client_id": {
+                    "type": "string"
+                  },
+                  "client_secret": {
+                    "type": "string",
+                    "writeOnly": true
+                  },
+                  "scope": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Token Bearer opaco",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "access_token": {
+                      "type": "string"
+                    },
+                    "token_type": {
+                      "const": "Bearer"
+                    },
+                    "expires_in": {
+                      "type": "integer"
+                    },
+                    "scope": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/InsertMembershipBatch": {
+      "post": {
+        "summary": "insert",
+        "description": "Recibe y guarda antes de enviar. Si el payload contiene upgrades se requiere además memberships:upgrade; override=true requiere memberships:override, habilitación del servidor y permiso oficial de Audax. Update no modifica el precio oficial.",
+        "security": [
+          {
+            "oauth": [
+              "memberships:insert"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            },
+            "description": "Única por cliente y operación lógica. Reutilizar al repetir el mismo envío."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 500,
+                "items": {
+                  "$ref": "#/components/schemas/InsertMembership"
+                }
+              },
+              "example": [
+                {
+                  "plan_id": "999",
+                  "membership_number": "MEM-001",
+                  "national_id": "AB123456",
+                  "business_id": "111",
+                  "last_name": "Doe",
+                  "first_name": "John",
+                  "issued_country": "14",
+                  "date_of_birth": "1980-05-15",
+                  "issued_date": "2027-01-01",
+                  "valid_from": "2027-02-01",
+                  "valid_to": "2027-03-01",
+                  "max_consecutive_days_per_trip": 30,
+                  "price": 10,
+                  "currency_id": "157"
+                }
+              ]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recepción local confirmada, no aceptación final de Audax",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UpdateMembershipBatch": {
+      "post": {
+        "summary": "update",
+        "description": "Recibe y guarda antes de enviar. Si el payload contiene upgrades se requiere además memberships:upgrade; override=true requiere memberships:override, habilitación del servidor y permiso oficial de Audax. Update no modifica el precio oficial.",
+        "security": [
+          {
+            "oauth": [
+              "memberships:update"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            },
+            "description": "Única por cliente y operación lógica. Reutilizar al repetir el mismo envío."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 500,
+                "items": {
+                  "$ref": "#/components/schemas/UpdateMembership"
+                }
+              },
+              "example": [
+                {
+                  "plan_id": "999",
+                  "membership_number": "MEM-001",
+                  "national_id": "AB123456",
+                  "business_id": "111",
+                  "last_name": "Doe",
+                  "first_name": "Jane",
+                  "issued_country": "14",
+                  "date_of_birth": "1980-05-15",
+                  "issued_date": "2027-01-01",
+                  "valid_from": "2027-02-01",
+                  "valid_to": "2027-03-01",
+                  "max_consecutive_days_per_trip": 30,
+                  "price": 10,
+                  "currency_id": "157"
+                }
+              ]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recepción local confirmada, no aceptación final de Audax",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/UpgradeMembershipBatch": {
+      "post": {
+        "summary": "upgrade",
+        "description": "Recibe y guarda antes de enviar. Si el payload contiene upgrades se requiere además memberships:upgrade; override=true requiere memberships:override, habilitación del servidor y permiso oficial de Audax. Update no modifica el precio oficial.",
+        "security": [
+          {
+            "oauth": [
+              "memberships:upgrade",
+              "memberships:update"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            },
+            "description": "Única por cliente y operación lógica. Reutilizar al repetir el mismo envío."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "minItems": 1,
+                "maxItems": 500,
+                "items": {
+                  "$ref": "#/components/schemas/UpgradeMembership"
+                }
+              },
+              "example": [
+                {
+                  "plan_id": "999",
+                  "membership_number": "MEM-001",
+                  "national_id": "AB123456",
+                  "business_id": "111",
+                  "last_name": "Doe",
+                  "first_name": "John",
+                  "issued_country": "14",
+                  "date_of_birth": "1980-05-15",
+                  "issued_date": "2027-01-01",
+                  "valid_from": "2027-02-01",
+                  "valid_to": "2027-03-01",
+                  "max_consecutive_days_per_trip": 30,
+                  "price": 10,
+                  "currency_id": "157",
+                  "upgrades": [
+                    {
+                      "22": {
+                        "valid_from": "2027-02-05",
+                        "valid_to": "2027-02-15",
+                        "price": 11,
+                        "currency_id": "157"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Recepción local confirmada, no aceptación final de Audax",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/CancelMembership": {
+      "delete": {
+        "summary": "cancel",
+        "description": "Recibe y guarda antes de enviar. Si el payload contiene upgrades se requiere además memberships:upgrade; override=true requiere memberships:override, habilitación del servidor y permiso oficial de Audax. Update no modifica el precio oficial.",
+        "security": [
+          {
+            "oauth": [
+              "memberships:cancel"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "pattern": "^[!-~]+$"
+            },
+            "description": "Única por cliente y operación lógica. Reutilizar al repetir el mismo envío."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Cancellation"
+              },
+              "example": {
+                "business_id": "111",
+                "plan_id": "999",
+                "issued_country": "14",
+                "membership_number": "MEM-001"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Recepción local confirmada, no aceptación final de Audax",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Receipt"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/GetProcessStatus/{ProcessID}": {
+      "get": {
+        "summary": "Consultar proceso local",
+        "security": [
+          {
+            "oauth": [
+              "memberships:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "ProcessID",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Estado y resultado del lote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProcessStatus"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/GetUpgrades": {
+      "get": {
+        "summary": "Catálogo de upgrades por empresas habilitadas",
+        "security": [
+          {
+            "oauth": [
+              "memberships:read"
+            ]
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Objeto indexado por business ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": "array",
+                    "items": {
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Error de validación, autenticación o autorización",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {}
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/memberships": {
+      "get": {
+        "summary": "Última solicitud confirmada por membership (no precio ni snapshot oficial)",
+        "security": [
+          {
+            "oauth": [
+              "memberships:read"
+            ]
+          }
+        ],
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000,
+              "default": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Hasta 100 registros",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "last_confirmed_request": {
+                        "type": "object"
+                      },
+                      "status": {
+                        "enum": [
+                          "active",
+                          "cancelled"
+                        ]
+                      },
+                      "updated_at": {
+                        "type": "string",
+                        "format": "date-time"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "oauth": {
+        "type": "oauth2",
+        "flows": {
+          "clientCredentials": {
+            "tokenUrl": "/oauth/token",
+            "scopes": {
+              "memberships:read": "read",
+              "memberships:insert": "insert",
+              "memberships:update": "update",
+              "memberships:upgrade": "upgrade",
+              "memberships:cancel": "cancel",
+              "memberships:override": "override"
+            }
+          }
+        }
+      },
+      "basic": {
+        "type": "http",
+        "scheme": "basic"
+      }
+    },
+    "schemas": {
+      "Upgrade": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "valid_from",
+          "valid_to"
+        ],
+        "properties": {
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "price": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "currency_id": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              {
+                "type": "integer",
+                "minimum": 1
+              }
+            ]
+          }
+        }
+      },
+      "InsertMembership": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "plan_id",
+          "membership_number",
+          "national_id",
+          "business_id",
+          "last_name",
+          "first_name",
+          "issued_country",
+          "date_of_birth",
+          "issued_date",
+          "valid_from",
+          "valid_to",
+          "max_consecutive_days_per_trip"
+        ],
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "membership_number": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "national_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "business_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "last_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "first_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "issued_country": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date"
+          },
+          "issued_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "max_consecutive_days_per_trip": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "price": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "currency_id": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              {
+                "type": "integer",
+                "minimum": 1
+              }
+            ]
+          },
+          "upgrades": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 1,
+              "additionalProperties": {
+                "$ref": "#/components/schemas/Upgrade"
+              }
+            }
+          }
+        }
+      },
+      "UpdateMembership": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "plan_id",
+          "membership_number",
+          "national_id",
+          "business_id",
+          "last_name",
+          "first_name",
+          "issued_country",
+          "date_of_birth",
+          "issued_date",
+          "valid_from",
+          "valid_to",
+          "max_consecutive_days_per_trip"
+        ],
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "membership_number": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "national_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "business_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "last_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "first_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "issued_country": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date"
+          },
+          "issued_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "max_consecutive_days_per_trip": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "price": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "currency_id": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              {
+                "type": "integer",
+                "minimum": 1
+              }
+            ]
+          },
+          "upgrades": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 1,
+              "additionalProperties": {
+                "$ref": "#/components/schemas/Upgrade"
+              }
+            }
+          },
+          "override": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "UpgradeMembership": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "plan_id",
+          "membership_number",
+          "national_id",
+          "business_id",
+          "last_name",
+          "first_name",
+          "issued_country",
+          "date_of_birth",
+          "issued_date",
+          "valid_from",
+          "valid_to",
+          "max_consecutive_days_per_trip",
+          "upgrades"
+        ],
+        "properties": {
+          "plan_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "membership_number": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "national_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "business_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "last_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "first_name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "issued_country": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "date_of_birth": {
+            "type": "string",
+            "format": "date"
+          },
+          "issued_date": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_from": {
+            "type": "string",
+            "format": "date"
+          },
+          "valid_to": {
+            "type": "string",
+            "format": "date"
+          },
+          "max_consecutive_days_per_trip": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "price": {
+            "type": "number",
+            "exclusiveMinimum": 0
+          },
+          "currency_id": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 128
+              },
+              {
+                "type": "integer",
+                "minimum": 1
+              }
+            ]
+          },
+          "upgrades": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "type": "object",
+              "minProperties": 1,
+              "maxProperties": 1,
+              "additionalProperties": {
+                "$ref": "#/components/schemas/Upgrade"
+              }
+            },
+            "minItems": 1
+          },
+          "override": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "Cancellation": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "business_id",
+          "plan_id",
+          "issued_country",
+          "membership_number"
+        ],
+        "properties": {
+          "business_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "plan_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "issued_country": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "membership_number": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128
+          },
+          "override": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "Receipt": {
+        "type": "object",
+        "required": [
+          "ProcessID"
+        ],
+        "properties": {
+          "ProcessID": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "ProcessStatus": {
+        "type": "object",
+        "required": [
+          "id",
+          "status",
+          "middleware_status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "enum": [
+              "processing",
+              "finished",
+              "failed",
+              "unknown"
+            ]
+          },
+          "middleware_status": {
+            "enum": [
+              "queued",
+              "sending",
+              "submitted",
+              "finished",
+              "failed",
+              "unknown"
+            ]
+          },
+          "audax_process_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "errors": {},
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object"
+            }
+          }
+        }
+      }
+    }
+  }
+}

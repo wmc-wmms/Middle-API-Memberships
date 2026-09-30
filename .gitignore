@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.test
+.env.prod
+data/
+coverage/
+*.log
+
+.env.prod.local
+
+.env.*
+!.env.*.example
+*.key
+*.zip
+artifacts/
+work/
+ACCESO-LOCAL.txt

@@ -1,0 +1,354 @@
+{
+  "info": {
+    "name": "Audax · Middleware",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Importar esta colección y completar client_id y client_secret. URL y scope incluidos; ambientes opcionales. No contiene secretos. Las claves de idempotencia se conservan: cambiar la variable correspondiente solo para una NUEVA operación."
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:3000",
+      "type": "string"
+    },
+    {
+      "key": "client_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "client_secret",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "scope",
+      "value": "memberships:read memberships:insert memberships:update memberships:upgrade memberships:cancel",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "process_id",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "insert_key",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "update_key",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "upgrade_key",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "cancel_key",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Obtener token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/x-www-form-urlencoded"
+          }
+        ],
+        "body": {
+          "mode": "urlencoded",
+          "urlencoded": [
+            {
+              "key": "grant_type",
+              "value": "client_credentials",
+              "type": "text"
+            },
+            {
+              "key": "client_id",
+              "value": "{{client_id}}",
+              "type": "text"
+            },
+            {
+              "key": "client_secret",
+              "value": "{{client_secret}}",
+              "type": "text"
+            },
+            {
+              "key": "scope",
+              "value": "{{scope}}",
+              "type": "text"
+            }
+          ]
+        },
+        "url": "{{base_url}}/oauth/token"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Token generado', () => pm.response.to.have.status(200));",
+              "if (pm.response.code === 200) pm.collectionVariables.set('access_token', pm.response.json().access_token);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Insert",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{insert_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  {\n    \"plan_id\": \"999\",\n    \"membership_number\": \"MEM-001\",\n    \"national_id\": \"AB123456\",\n    \"business_id\": \"111\",\n    \"last_name\": \"Doe\",\n    \"first_name\": \"John\",\n    \"issued_country\": \"14\",\n    \"date_of_birth\": \"1980-05-15\",\n    \"issued_date\": \"2027-01-01\",\n    \"valid_from\": \"2027-02-01\",\n    \"valid_to\": \"2027-03-01\",\n    \"max_consecutive_days_per_trip\": 30,\n    \"price\": 10,\n    \"currency_id\": \"157\"\n  }\n]",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/api/InsertMembershipBatch"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.variables.get('insert_key')) pm.collectionVariables.set('insert_key', pm.variables.replaceIn('{{$guid}}'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Recepción local', () => pm.response.to.have.status(200));",
+              "if ([200, 202].includes(pm.response.code)) pm.collectionVariables.set('process_id', pm.response.json().ProcessID);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{update_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  {\n    \"plan_id\": \"999\",\n    \"membership_number\": \"MEM-001\",\n    \"national_id\": \"AB123456\",\n    \"business_id\": \"111\",\n    \"last_name\": \"Doe\",\n    \"first_name\": \"Jane\",\n    \"issued_country\": \"14\",\n    \"date_of_birth\": \"1980-05-15\",\n    \"issued_date\": \"2027-01-01\",\n    \"valid_from\": \"2027-02-01\",\n    \"valid_to\": \"2027-03-01\",\n    \"max_consecutive_days_per_trip\": 30,\n    \"price\": 10,\n    \"currency_id\": \"157\"\n  }\n]",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/api/UpdateMembershipBatch"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.variables.get('update_key')) pm.collectionVariables.set('update_key', pm.variables.replaceIn('{{$guid}}'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Recepción local', () => pm.response.to.have.status(200));",
+              "if ([200, 202].includes(pm.response.code)) pm.collectionVariables.set('process_id', pm.response.json().ProcessID);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Upgrade",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{upgrade_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "[\n  {\n    \"plan_id\": \"999\",\n    \"membership_number\": \"MEM-001\",\n    \"national_id\": \"AB123456\",\n    \"business_id\": \"111\",\n    \"last_name\": \"Doe\",\n    \"first_name\": \"John\",\n    \"issued_country\": \"14\",\n    \"date_of_birth\": \"1980-05-15\",\n    \"issued_date\": \"2027-01-01\",\n    \"valid_from\": \"2027-02-01\",\n    \"valid_to\": \"2027-03-01\",\n    \"max_consecutive_days_per_trip\": 30,\n    \"price\": 10,\n    \"currency_id\": \"157\",\n    \"upgrades\": [\n      {\n        \"22\": {\n          \"valid_from\": \"2027-02-05\",\n          \"valid_to\": \"2027-02-15\",\n          \"price\": 11,\n          \"currency_id\": \"157\"\n        }\n      }\n    ]\n  }\n]",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/api/UpgradeMembershipBatch"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.variables.get('upgrade_key')) pm.collectionVariables.set('upgrade_key', pm.variables.replaceIn('{{$guid}}'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Recepción local', () => pm.response.to.have.status(200));",
+              "if ([200, 202].includes(pm.response.code)) pm.collectionVariables.set('process_id', pm.response.json().ProcessID);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Baja",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Idempotency-Key",
+            "value": "{{cancel_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"business_id\": \"111\",\n  \"plan_id\": \"999\",\n  \"issued_country\": \"14\",\n  \"membership_number\": \"MEM-001\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": "{{base_url}}/api/CancelMembership"
+      },
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "if (!pm.variables.get('cancel_key')) pm.collectionVariables.set('cancel_key', pm.variables.replaceIn('{{$guid}}'));"
+            ]
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Recepción local', () => pm.response.to.have.status(202));",
+              "if ([200, 202].includes(pm.response.code)) pm.collectionVariables.set('process_id', pm.response.json().ProcessID);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Consultar estado",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/GetProcessStatus/{{process_id}}"
+      }
+    },
+    {
+      "name": "Catálogo upgrades",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/GetUpgrades"
+      }
+    },
+    {
+      "name": "Últimas solicitudes confirmadas",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}"
+          }
+        ],
+        "url": "{{base_url}}/api/memberships"
+      }
+    }
+  ]
+}

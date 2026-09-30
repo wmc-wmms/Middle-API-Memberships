@@ -1,0 +1,30 @@
+{
+  "name": "Audax middleware TEST",
+  "values": [
+    {
+      "key": "base_url",
+      "value": "http://127.0.0.1:3000",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "client_id",
+      "value": "",
+      "enabled": true,
+      "type": "default"
+    },
+    {
+      "key": "client_secret",
+      "value": "",
+      "enabled": true,
+      "type": "secret"
+    },
+    {
+      "key": "scope",
+      "value": "memberships:read memberships:insert memberships:update memberships:upgrade memberships:cancel",
+      "enabled": true,
+      "type": "default"
+    }
+  ],
+  "_postman_variable_scope": "environment"
+}

@@ -1,0 +1,5 @@
+# Caddy gestiona el certificado para el dominio configurado en el contenedor.
+{$PUBLIC_DOMAIN} {
+    encode zstd gzip
+    reverse_proxy api:3000
+}
